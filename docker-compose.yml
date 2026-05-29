@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: momentia
+    environment:
+      POSTGRES_USER: bapak_kau
+      POSTGRES_PASSWORD: your_father_head
+      POSTGRES_DB: momentia
+    ports:
+      - "5433:5432"
+    volumes:
+      - momentia_postgres_data:/var/lib/postgresql/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bapak_kau -d momentia -h localhost -p 5433"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  momentia_postgres_data:
+    driver: local
