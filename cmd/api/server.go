@@ -8,6 +8,7 @@ import (
 	"momentia-be/repository"
 	"momentia-be/services"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
@@ -53,6 +54,10 @@ func main() {
 	userHandler := handler.NewUserHandler(userRepo, userService)
 
 	// Router
+	if os.Getenv("JWT_SECRET") == "" {
+		log.Fatal("JWT_SECRET environment variable is not set")
+	}
+
 	if cfg.App.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}

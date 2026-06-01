@@ -45,19 +45,19 @@ func NewUserService(repo repository.UserRepository) UserService {
 func (s *userService) Register(input RegisterInput) (*model.User, error) {
 	if existing, err := s.repo.GetUserByUsername(input.Username); err != nil {
 		return nil, err
-	} else if existing.ID != 0 {
+	} else if existing != nil {
 		return nil, fmt.Errorf("username already taken")
 	}
 
 	if existing, err := s.repo.GetUserByEmail(input.Email); err != nil {
 		return nil, err
-	} else if existing.ID != 0 {
+	} else if existing != nil {
 		return nil, fmt.Errorf("email already registered")
 	}
 
 	if existing, err := s.repo.GetUserByMsisdn(input.Msisdn); err != nil {
 		return nil, err
-	} else if existing.ID != 0 {
+	} else if existing != nil {
 		return nil, fmt.Errorf("msisdn already registered")
 	}
 

@@ -50,19 +50,19 @@ func (s *stubRepo) GetUserByEmail(email string) (*model.User, error) {
 	if s.getUserByEmailFn != nil {
 		return s.getUserByEmailFn(email)
 	}
-	return &model.User{}, nil
+	return nil, nil
 }
 func (s *stubRepo) GetUserByUsername(username string) (*model.User, error) {
 	if s.getUserByUsernameFn != nil {
 		return s.getUserByUsernameFn(username)
 	}
-	return &model.User{}, nil
+	return nil, nil
 }
 func (s *stubRepo) GetUserByMsisdn(msisdn string) (*model.User, error) {
 	if s.getUserByMsisdnFn != nil {
 		return s.getUserByMsisdnFn(msisdn)
 	}
-	return &model.User{}, nil
+	return nil, nil
 }
 func (s *stubRepo) UpdateUser(u *model.User) error {
 	if s.updateUserFn != nil {
