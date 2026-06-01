@@ -26,7 +26,7 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 }
 
 func (r *userRepository) Register(user *model.User) error {
-	return r.db.FirstOrCreate(user, "email = ?", user.Email).Error
+	return r.db.Create(user).Error
 }
 
 func (r *userRepository) Login(email string) (*model.User, error) {
@@ -47,7 +47,7 @@ func (r *userRepository) Logout(id int) (*model.User, error) {
 
 func (r *userRepository) GetUserByID(id int) (*model.User, error) {
 	var user model.User
-	if err := r.db.Where("id = ?", id).Limit(1).Find(&user).Error; err != nil {
+	if err := r.db.First(&user, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
@@ -58,6 +58,9 @@ func (r *userRepository) GetUserByEmail(email string) (*model.User, error) {
 	if err := r.db.Where("email = ?", email).Limit(1).Find(&user).Error; err != nil {
 		return nil, err
 	}
+	if user.ID == 0 {
+		return nil, nil
+	}
 	return &user, nil
 }
 
@@ -66,6 +69,9 @@ func (r *userRepository) GetUserByUsername(username string) (*model.User, error)
 	if err := r.db.Where("username = ?", username).Limit(1).Find(&user).Error; err != nil {
 		return nil, err
 	}
+	if user.ID == 0 {
+		return nil, nil
+	}
 	return &user, nil
 }
 
@@ -73,6 +79,9 @@ func (r *userRepository) GetUserByMsisdn(msisdn string) (*model.User, error) {
 	var user model.User
 	if err := r.db.Where("msisdn = ?", msisdn).Limit(1).Find(&user).Error; err != nil {
 		return nil, err
+	}
+	if user.ID == 0 {
+		return nil, nil
 	}
 	return &user, nil
 }

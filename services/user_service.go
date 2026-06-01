@@ -43,6 +43,24 @@ func NewUserService(repo repository.UserRepository) UserService {
 }
 
 func (s *userService) Register(input RegisterInput) (*model.User, error) {
+	if existing, err := s.repo.GetUserByUsername(input.Username); err != nil {
+		return nil, err
+	} else if existing.ID != 0 {
+		return nil, fmt.Errorf("username already taken")
+	}
+
+	if existing, err := s.repo.GetUserByEmail(input.Email); err != nil {
+		return nil, err
+	} else if existing.ID != 0 {
+		return nil, fmt.Errorf("email already registered")
+	}
+
+	if existing, err := s.repo.GetUserByMsisdn(input.Msisdn); err != nil {
+		return nil, err
+	} else if existing.ID != 0 {
+		return nil, fmt.Errorf("msisdn already registered")
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
@@ -53,24 +71,6 @@ func (s *userService) Register(input RegisterInput) (*model.User, error) {
 		Email:        input.Email,
 		Msisdn:       input.Msisdn,
 		PasswordHash: string(hash),
-	}
-
-	if existing, err := s.repo.GetUserByUsername(input.Username); err != nil {
-		return nil, err
-	} else if existing != nil {
-		return nil, fmt.Errorf("username already taken")
-	}
-
-	if existing, err := s.repo.GetUserByEmail(input.Email); err != nil {
-		return nil, err
-	} else if existing != nil {
-		return nil, fmt.Errorf("email already registered")
-	}
-
-	if existing, err := s.repo.GetUserByMsisdn(input.Msisdn); err != nil {
-		return nil, err
-	} else if existing != nil {
-		return nil, fmt.Errorf("msisdn already registered")
 	}
 
 	if err := s.repo.Register(user); err != nil {
@@ -88,7 +88,7 @@ func (s *userService) Login(input LoginInput) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch user: %w", err)
 	}
-	if user == nil {
+	if user.ID == 0 {
 		return "", fmt.Errorf("invalid email or password")
 	}
 
