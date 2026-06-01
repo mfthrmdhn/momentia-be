@@ -27,9 +27,10 @@ func GenerateToken(userID int, secret string, expireHours int) (string, error) {
 	return token.SignedString([]byte(secret))
 }
 
-// AuthMiddleware is a stub — implement once real JWT auth is wired up.
-// Use MockAuth() in the meantime.
 func AuthMiddleware(secret string) gin.HandlerFunc {
+	if secret == "" {
+		panic("AuthMiddleware: JWT Secret must not be empty")
+	}
 	return func(c *gin.Context) {
 		header := c.GetHeader("Authorization")
 		if header == "" {
