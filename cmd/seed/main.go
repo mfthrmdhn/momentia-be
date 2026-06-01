@@ -29,9 +29,10 @@ func main() {
 
 	// Insert a user first to satisfy foreign key constraints
 	db.Clauses(clause.OnConflict{DoNothing: true}).Create(&model.User{
-		ID:           1,
-		Username:     "mocks",
-		Email:        "mocks@cuvox.de",
+		ID:           	1,
+		Username:     	"mocks",
+		Email:			"mocks@cuvox.de",
+		Msisdn:			"+628128409238",
 		PasswordHash: hashPassword("testpassword"),
 	})
 

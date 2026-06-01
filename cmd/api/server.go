@@ -2,18 +2,20 @@ package main
 
 import (
 	"log"
+	"momentia-be/endpoints"
 	"momentia-be/internal/config"
 	"momentia-be/internal/handler"
-	"momentia-be/internal/middleware"
 	"momentia-be/repository"
+	"momentia-be/services"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func runMigrations(dsn string) {
@@ -35,7 +37,9 @@ func main() {
 	}
 
 	// Init db
-	db, err := gorm.Open(postgres.Open(cfg.DB.DSN()), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(cfg.DB.DSN()), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
 	if err != nil {
 		panic("database connection failed: " + err.Error())
 	}
@@ -45,7 +49,8 @@ func main() {
 	personRepo := repository.NewPersonRepository(db)
 	personHandler := handler.NewPersonHandler(personRepo)
 	userRepo := repository.NewUserRepository(db)
-	userHandler := handler.NewUserHandler(userRepo)
+	userService := services.NewUserService(userRepo)
+	userHandler := handler.NewUserHandler(userRepo, userService)
 
 	// Router
 	if cfg.App.Env == "production" {
@@ -61,21 +66,9 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	v1 := r.Group("/api/v1")
-	{
-		// TODO: wire up real auth handler for /auth/register and /auth/login
-
-		// Protected routes — using MockAuth until real JWT auth is implemented
-		api := v1.Group("/")
-		api.Use(middleware.MockAuth())
-		{
-			api.GET("/profile", userHandler.GetUserByID) // Example protected route for user profile
-			api.GET("/persons", personHandler.GetPersons)
-			api.POST("/persons", personHandler.CreatePerson)
-			api.GET("/persons/:id", personHandler.GetPersonByID)
-			api.DELETE("/persons/:id", personHandler.DeletePerson)
-		}
-	}
+	//endpoints
+	endpoints.RegisterPersonRoutes(r, *personHandler)
+	endpoints.RegisterUserRoutes(r, *userHandler)
 
 	log.Printf("server starting on :%s", cfg.App.Port)
 	if err := r.Run(":" + cfg.App.Port); err != nil {
