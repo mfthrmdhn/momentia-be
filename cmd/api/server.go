@@ -50,7 +50,8 @@ func main() {
 	personRepo := repository.NewPersonRepository(db)
 	personHandler := handler.NewPersonHandler(personRepo)
 	userRepo := repository.NewUserRepository(db)
-	userService := services.NewUserService(userRepo)
+	sessionRepo := repository.NewUserSessionRepository(db)
+	userService := services.NewUserService(userRepo, sessionRepo)
 	userHandler := handler.NewUserHandler(userRepo, userService)
 
 	// Router
@@ -72,8 +73,8 @@ func main() {
 	})
 
 	//endpoints
-	endpoints.RegisterPersonRoutes(r, *personHandler)
-	endpoints.RegisterUserRoutes(r, *userHandler)
+	endpoints.RegisterPersonRoutes(r, *personHandler, sessionRepo)
+	endpoints.RegisterUserRoutes(r, *userHandler, sessionRepo)
 
 	log.Printf("server starting on :%s", cfg.App.Port)
 	if err := r.Run(":" + cfg.App.Port); err != nil {

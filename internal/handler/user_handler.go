@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"momentia-be/pkg/response"
 	"momentia-be/repository"
 	"momentia-be/services"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -64,16 +67,18 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 }
 
 func (h *UserHandler) Logout(c *gin.Context) {
-	userID, exists := c.Get("userID")
-	if !exists {
+	tokenStr := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
+	if tokenStr == "" {
 		response.Unauthorized(c, "user not authenticated")
 		return
 	}
 
-	user, err := h.service.Logout(userID.(int))
-	if err != nil {
-		response.NotFound(c, "user not found")
+	hash := sha256.Sum256([]byte(tokenStr))
+	tokenHash := fmt.Sprintf("%x", hash)
+
+	if err := h.service.Logout(tokenHash); err != nil {
+		response.InternalError(c, "logout failed")
 		return
 	}
-	response.OK(c, "logout successful", user)
+	response.OK(c, "logout successful", nil)
 }

@@ -1,10 +1,12 @@
 package services
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"momentia-be/internal/middleware"
 	"momentia-be/model"
 	"os"
+	"time"
 
 	"momentia-be/repository"
 
@@ -30,16 +32,17 @@ type UserService interface {
 	GetUserByEmail(email string) (*model.User, error)
 	GetUserByUsername(username string) (*model.User, error)
 	GetUserByMsisdn(msisdn string) (*model.User, error)
-	Logout(id int) (*model.User, error)
+	Logout(tokenHash string) error
 	UpdateUser(user *model.User) error
 }
 
 type userService struct {
-	repo repository.UserRepository
+	repo        repository.UserRepository
+	sessionRepo repository.UserSessionRepository
 }
 
-func NewUserService(repo repository.UserRepository) UserService {
-	return &userService{repo}
+func NewUserService(repo repository.UserRepository, sessionRepo repository.UserSessionRepository) UserService {
+	return &userService{repo: repo, sessionRepo: sessionRepo}
 }
 
 func (s *userService) Register(input RegisterInput) (*model.User, error) {
@@ -101,16 +104,27 @@ func (s *userService) Login(input LoginInput) (string, error) {
 		return "", fmt.Errorf("server misconfiguration: JWT secret not set")
 	}
 
-	token, err := middleware.GenerateToken(user.ID, secret, 24)
+	const tokenTTLHours = 24
+	token, err := middleware.GenerateToken(user.ID, secret, tokenTTLHours)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	hash := sha256.Sum256([]byte(token))
+	session := &model.UserSession{
+		UserID:    user.ID,
+		TokenHash: fmt.Sprintf("%x", hash),
+		ExpiresAt: time.Now().Add(tokenTTLHours * time.Hour),
+	}
+	if err := s.sessionRepo.Create(session); err != nil {
+		return "", fmt.Errorf("failed to create session: %w", err)
 	}
 
 	return token, nil
 }
 
-func (s *userService) Logout(id int) (*model.User, error) {
-	return s.repo.Logout(id)
+func (s *userService) Logout(tokenHash string) error {
+	return s.sessionRepo.DeleteByTokenHash(tokenHash)
 }
 
 func (s *userService) GetUserByID(id int) (*model.User, error) {

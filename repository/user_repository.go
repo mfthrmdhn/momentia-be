@@ -9,7 +9,6 @@ import (
 type UserRepository interface {
 	Register(user *model.User) error
 	Login(email string) (*model.User, error)
-	Logout(id int) (*model.User, error)
 	GetUserByID(id int) (*model.User, error)
 	GetUserByEmail(email string) (*model.User, error)
 	GetUserByUsername(username string) (*model.User, error)
@@ -32,14 +31,6 @@ func (r *userRepository) Register(user *model.User) error {
 func (r *userRepository) Login(email string) (*model.User, error) {
 	var user model.User
 	if err := r.db.Where("email = ?", email).Limit(1).Find(&user).Error; err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
-func (r *userRepository) Logout(id int) (*model.User, error) {
-	var user model.User
-	if err := r.db.First(&user, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil

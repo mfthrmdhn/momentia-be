@@ -1,7 +1,10 @@
 package middleware
 
 import (
+	"crypto/sha256"
 	"errors"
+	"fmt"
+	"momentia-be/repository"
 	"strings"
 	"time"
 
@@ -12,14 +15,13 @@ import (
 type Claims struct {
 	UserID int `json:"user_id"`
 	jwt.RegisteredClaims
-	// Add other fields as needed, e.g. Expiry time
 }
 
 func GenerateToken(userID int, secret string, expireHours int) (string, error) {
 	claims := &Claims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			IssuedAt: jwt.NewNumericDate(time.Now()),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(expireHours) * time.Hour)),
 		},
 	}
@@ -27,7 +29,7 @@ func GenerateToken(userID int, secret string, expireHours int) (string, error) {
 	return token.SignedString([]byte(secret))
 }
 
-func AuthMiddleware(secret string) gin.HandlerFunc {
+func AuthMiddleware(secret string, sessionRepo repository.UserSessionRepository) gin.HandlerFunc {
 	if secret == "" {
 		panic("AuthMiddleware: JWT Secret must not be empty")
 	}
@@ -39,11 +41,11 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 		}
 
 		tokenStr := strings.TrimPrefix(header, "Bearer ")
-		claims := &Claims{};
+		claims := &Claims{}
 
 		token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, errors.New("Unexpected signing method")
+				return nil, errors.New("unexpected signing method")
 			}
 			return []byte(secret), nil
 		})
@@ -52,6 +54,14 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 			c.AbortWithStatusJSON(401, gin.H{"error": "Invalid or expired token"})
 			return
 		}
+
+		hash := sha256.Sum256([]byte(tokenStr))
+		tokenHash := fmt.Sprintf("%x", hash)
+		if _, err := sessionRepo.FindByTokenHash(tokenHash); err != nil {
+			c.AbortWithStatusJSON(401, gin.H{"error": "Token has been revoked"})
+			return
+		}
+
 		c.Set("userID", claims.UserID)
 		c.Next()
 	}
