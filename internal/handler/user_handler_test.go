@@ -23,7 +23,7 @@ func init() {
 type stubService struct {
 	registerFn          func(services.RegisterInput) (*model.User, error)
 	loginFn             func(services.LoginInput) (string, error)
-	logoutFn            func(int) (*model.User, error)
+	logoutFn            func(string) error
 	getUserByIDFn       func(int) (*model.User, error)
 	getUserByEmailFn    func(string) (*model.User, error)
 	getUserByUsernameFn func(string) (*model.User, error)
@@ -43,11 +43,11 @@ func (s *stubService) Login(input services.LoginInput) (string, error) {
 	}
 	return "mock-token", nil
 }
-func (s *stubService) Logout(id int) (*model.User, error) {
+func (s *stubService) Logout(tokenHash string) error {
 	if s.logoutFn != nil {
-		return s.logoutFn(id)
+		return s.logoutFn(tokenHash)
 	}
-	return &model.User{ID: id}, nil
+	return nil
 }
 func (s *stubService) GetUserByID(id int) (*model.User, error) {
 	if s.getUserByIDFn != nil {
@@ -330,15 +330,16 @@ func TestGetProfile_UserNotFound(t *testing.T) {
 
 func TestLogoutHandler_Success(t *testing.T) {
 	svc := &stubService{
-		logoutFn: func(id int) (*model.User, error) {
-			return &model.User{ID: id, Username: "alice"}, nil
+		logoutFn: func(tokenHash string) error {
+			return nil
 		},
 	}
 	h := handler.NewUserHandler(&stubRepo{}, svc)
-	r := newRouterWithAuth(h, 1)
+	r := newRouter(h)
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/logout", nil)
+	req.Header.Set("Authorization", "Bearer some-valid-token")
 	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -348,7 +349,7 @@ func TestLogoutHandler_Success(t *testing.T) {
 
 func TestLogoutHandler_Unauthenticated(t *testing.T) {
 	h := handler.NewUserHandler(&stubRepo{}, &stubService{})
-	r := newRouter(h) // no injectUserID middleware
+	r := newRouter(h)
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/logout", nil)
@@ -359,20 +360,21 @@ func TestLogoutHandler_Unauthenticated(t *testing.T) {
 	}
 }
 
-func TestLogoutHandler_UserNotFound(t *testing.T) {
+func TestLogoutHandler_ServiceError(t *testing.T) {
 	svc := &stubService{
-		logoutFn: func(int) (*model.User, error) {
-			return nil, errors.New("record not found")
+		logoutFn: func(string) error {
+			return errors.New("db error")
 		},
 	}
 	h := handler.NewUserHandler(&stubRepo{}, svc)
-	r := newRouterWithAuth(h, 99)
+	r := newRouter(h)
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/logout", nil)
+	req.Header.Set("Authorization", "Bearer some-valid-token")
 	r.ServeHTTP(w, req)
 
-	if w.Code != http.StatusNotFound {
-		t.Errorf("expected 404, got %d", w.Code)
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("expected 500, got %d", w.Code)
 	}
 }
