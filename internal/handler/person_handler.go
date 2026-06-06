@@ -81,6 +81,37 @@ func (h *PersonHandler) GetPersons(c *gin.Context) {
 	})
 }
 
+func (h *PersonHandler) UpdatePerson(c *gin.Context) {
+	var input services.UpdatePersonInput
+	userID := c.GetInt("userID")
+	if userID == 0 {
+		response.Unauthorized(c, "user not authenticated")
+		return
+	}
+
+	parsedID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "invalid person ID", nil)
+		return
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		response.BadRequest(c, "validation error", err.Error())
+		return
+	}
+
+	person, err := h.service.UpdatePerson(parsedID, userID, input)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			response.NotFound(c, "person not found")
+			return
+		}
+		response.InternalError(c, "failed to update person")
+		return
+	}
+	response.OK(c, "person updated successfully", person)
+}
+
 func (h *PersonHandler) DeletePerson(c *gin.Context) {
 	parsedID, err := uuid.Parse(c.Param("id"))
 	if err != nil {

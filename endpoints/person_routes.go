@@ -16,6 +16,7 @@ func RegisterPersonRoutes(r *gin.Engine, h handler.PersonHandler, sessionRepo re
 		api.GET("/persons", h.GetPersons)
 		api.GET("/persons/:id", h.GetPersonByID)
 		api.POST("/persons", h.CreatePerson)
+		api.PUT("/persons/:id", h.UpdatePerson)
 		api.DELETE("/persons/:id", h.DeletePerson)
 	}
 }

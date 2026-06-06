@@ -27,6 +27,7 @@ type PersonRepository interface {
 	CreatePerson(userID int, person *model.Person) (*model.Person, error)
 	GetPersonByID(id uuid.UUID, userID int) (*model.Person, error)
 	GetAllPersons(userID int, page int, pageSize int) ([]*model.Person, int, error)
+	UpdatePerson(id uuid.UUID, userID int, updates map[string]interface{}) error
 	DeletePerson(id uuid.UUID) error
 }
 
@@ -71,6 +72,17 @@ func (r *personRepository) GetAllPersons(userID int, page int, pageSize int) ([]
 	}
 
 	return persons, int(total), nil
+}
+
+func (r *personRepository) UpdatePerson(id uuid.UUID, userID int, updates map[string]interface{}) error {
+	result := r.db.Model(&model.Person{}).Where("id = ? AND creator_user_id = ?", id, userID).Updates(updates)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
 func (r *personRepository) DeletePerson(id uuid.UUID) error {

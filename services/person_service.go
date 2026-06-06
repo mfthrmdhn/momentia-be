@@ -15,10 +15,17 @@ type CreatePersonInput struct {
 	IsPinned     bool   `json:"is_pinned"`
 }
 
+type UpdatePersonInput struct {
+	Name         *string `json:"name"`
+	Relationship *string `json:"relationship"`
+	IsPinned     *bool   `json:"is_pinned"`
+}
+
 type PersonService interface {
 	CreatePerson(userID int, input CreatePersonInput) (*model.Person, error)
 	GetPersonByID(id uuid.UUID, userID int) (*model.Person, error)
 	GetAllPersons(userID int, page int, pageSize int) ([]*model.Person, *pagination.PaginationMeta, error)
+	UpdatePerson(id uuid.UUID, userID int, input UpdatePersonInput) (*model.Person, error)
 	DeletePerson(id uuid.UUID) error
 }
 
@@ -66,6 +73,23 @@ func (s *personService) GetAllPersons(userID int, page int, pageSize int) ([]*mo
 		TotalPages: int(math.Ceil(float64(total) / float64(pageSize))),
 	}
 	return person, meta, nil
+}
+
+func (s *personService) UpdatePerson(id uuid.UUID, userID int, input UpdatePersonInput) (*model.Person, error) {
+	updates := map[string]interface{}{}
+	if input.Name != nil {
+		updates["name"] = *input.Name
+	}
+	if input.Relationship != nil {
+		updates["relationship"] = *input.Relationship
+	}
+	if input.IsPinned != nil {
+		updates["is_pinned"] = *input.IsPinned
+	}
+	if err := s.repo.UpdatePerson(id, userID, updates); err != nil {
+		return nil, err
+	}
+	return s.repo.GetPersonByID(id, userID)
 }
 
 func (s *personService) DeletePerson(id uuid.UUID) error {
