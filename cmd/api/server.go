@@ -47,8 +47,9 @@ func main() {
 	runMigrations(cfg.DB.DSN())
 
 	// Wire up dependencies
-	// personRepo := repository.NewPersonRepository(db)
-	// personHandler := handler.NewPersonHandler(personRepo)
+	personRepo := repository.NewPersonRepository(db)
+	personService := services.NewPersonService(personRepo)
+	personHandler := handler.NewPersonHandler(personService)
 	userRepo := repository.NewUserRepository(db)
 	sessionRepo := repository.NewUserSessionRepository(db)
 	userService := services.NewUserService(userRepo, sessionRepo)
@@ -73,7 +74,7 @@ func main() {
 	})
 
 	//endpoints
-	// endpoints.RegisterPersonRoutes(r, *personHandler, sessionRepo)
+	endpoints.RegisterPersonRoutes(r, *personHandler, sessionRepo)
 	endpoints.RegisterUserRoutes(r, *userHandler, sessionRepo)
 
 	log.Printf("server starting on :%s", cfg.App.Port)
