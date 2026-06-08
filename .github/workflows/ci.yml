@@ -52,10 +52,12 @@ jobs:
                 event: context.eventName,
                 be_repo: 'mfthrmdhn/momentia-be',
                 be_branch: context.ref.replace('refs/heads/', ''),
-                db_name: 'momentia',
-                db_user: 'bapak_kau',
-                db_password: 'your_father_head',
-                db_port: '5433',
+                db: {
+                  name: 'momentia',
+                  user: 'bapak_kau',
+                  password: 'your_father_head',
+                  port: '5433',
+                },
                 migration_path: 'internal/db/migrations',
                 seed_cmd: 'go run ./cmd/seed',
               }
