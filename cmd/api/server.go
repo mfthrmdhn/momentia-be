@@ -49,7 +49,10 @@ func main() {
 	// Wire up dependencies
 	personRepo := repository.NewPersonRepository(db)
 	personService := services.NewPersonService(personRepo)
+	personDateRepo := repository.NewPersonDatesRepository(db)
+	personDateService := services.NewPersonDatesService(personDateRepo)
 	personHandler := handler.NewPersonHandler(personService)
+	personDateHandler := handler.NewPersonDateHandler(personDateService)
 	userRepo := repository.NewUserRepository(db)
 	sessionRepo := repository.NewUserSessionRepository(db)
 	userService := services.NewUserService(userRepo, sessionRepo)
@@ -74,7 +77,7 @@ func main() {
 	})
 
 	//endpoints
-	endpoints.RegisterPersonRoutes(r, *personHandler, sessionRepo)
+	endpoints.RegisterPersonRoutes(r, *personHandler, *personDateHandler, sessionRepo)
 	endpoints.RegisterUserRoutes(r, *userHandler, sessionRepo)
 
 	log.Printf("server starting on :%s", cfg.App.Port)

@@ -7,21 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type PersonMedicalInfoRepository struct {
-	// This struct can hold a database connection or any other dependencies needed for the repository
-}
-
-type PersonLikesRepository struct {
-	// This struct can hold a database connection or any other dependencies needed for the repository
-}
-
-type PersonDislikesRepository struct {
-	// This struct can hold a database connection or any other dependencies needed for the repository
-}
-
-type PersonDatesRepository struct {
-	// This struct can hold a database connection or any other dependencies needed for the repository
-}
 
 type PersonRepository interface {
 	CreatePerson(userID int, person *model.Person) (*model.Person, error)
@@ -96,34 +81,3 @@ func (r *personRepository) DeletePerson(id uuid.UUID) error {
 	return nil
 }
 
-type PersonMedicalInfoRepositoryInterface interface {
-	Create(personMedicalInfo *model.PersonMedicalInfo) error
-	FindByID(id uuid.UUID) (*model.PersonMedicalInfo, error)
-	FindAll() ([]*model.PersonMedicalInfo, error)
-	Update(personMedicalInfo *model.PersonMedicalInfo) error
-	Delete(id uuid.UUID) error
-}
-
-type PersonLikesRepositoryInterface interface {
-	Create(personLikes *model.PersonLikes) error
-	FindByID(id uuid.UUID) (*model.PersonLikes, error)
-	FindAll() ([]*model.PersonLikes, error)
-	Update(personLikes *model.PersonLikes) error
-	Delete(id uuid.UUID) error
-}
-
-type PersonDislikesRepositoryInterface interface {
-	Create(personDislikes *model.PersonDislikes) error
-	FindByID(id uuid.UUID) (*model.PersonDislikes, error)
-	FindAll() ([]*model.PersonDislikes, error)
-	Update(personDislikes *model.PersonDislikes) error
-	Delete(id uuid.UUID) error
-}
-
-type PersonDatesRepositoryInterface interface {
-	Create(personDate *model.PersonDates) error
-	FindByID(id uuid.UUID) (*model.PersonDates, error)
-	FindAll() ([]*model.PersonDates, error)
-	Update(personDate *model.PersonDates) error
-	Delete(id uuid.UUID) error
-}
