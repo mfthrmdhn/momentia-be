@@ -118,7 +118,7 @@ jobs:
         working-directory: momentia-automation
 
       - name: Run API tests
-        run: npm run test:api --reporter=github, html
+        run: npm run test:api
         working-directory: momentia-automation
 
       - name: Upload Playwright report
