@@ -28,13 +28,37 @@ func main() {
 	}
 
 	// Insert a user first to satisfy foreign key constraints
-	db.Clauses(clause.OnConflict{DoNothing: true}).Create(&model.User{
-		ID:           	1,
-		Username:     	"mocks",
-		Email:			"mocks@cuvox.de",
-		Msisdn:			"+628128409238",
-		PasswordHash: hashPassword("testpassword"),
-	})
+	users := []model.User{
+		{
+		ID:           		1,
+		Username:     		"worker1",
+		Email:				"worker1@gustr.com",
+		Msisdn:				"+6281284091230",
+		PasswordHash: 		hashPassword("testpassword"),
+		},
+		{
+			ID: 			2,
+			Username: 		"worker2",
+			Email: 			"worker2@gustr.com",
+			Msisdn: 		"+6281284091232",
+			PasswordHash: 	hashPassword("testpassword"),
+		},
+		{
+			ID: 			3,
+			Username: 		"worker3",
+			Email: 			"worker3@gustr.com",
+			Msisdn: 		"+6281284091233",
+			PasswordHash: 	hashPassword("testpassword"),
+		},
+		{
+			ID: 			4,
+			Username: 		"worker4",
+			Email: 			"worker4@gustr.com",
+			Msisdn: 		"+6281284091234",
+			PasswordHash: 	hashPassword("testpassword"),
+		},
+	}
+	db.Clauses(clause.OnConflict{DoNothing: true}).Create(&users)
 
 	// Insert persons first and capture their real IDs
 	person := []model.Person{
