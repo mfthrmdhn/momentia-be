@@ -60,6 +60,9 @@ func main() {
 	}
 	db.Clauses(clause.OnConflict{DoNothing: true}).Create(&users)
 
+	// Reset the sequence so future auto-increment inserts don't collide with seeded IDs
+	db.Exec("SELECT setval(pg_get_serial_sequence('users', 'id'), (SELECT MAX(id) FROM users))")
+
 	// Insert persons first and capture their real IDs
 	person := []model.Person{
 		{CreatorUserID: 1, Name: "Alice", Relationship: "Partner", IsPinned: true},
