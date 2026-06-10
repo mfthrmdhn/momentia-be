@@ -34,6 +34,9 @@ jobs:
     needs: build-and-test
     if: success()
 
+    permissions:
+      contents: write
+
     env:
       DB_HOST: localhost
       DB_PORT: "5433"
@@ -128,6 +131,21 @@ jobs:
           name: playwright-report
           path: momentia-automation/playwright-report/
           retention-days: 7
+
+      - name: Deploy Playwright report to GitHub Pages
+        if: failure()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: momentia-automation/playwright-report
+          destination_dir: reports/${{ github.run_id }}
+          keep_files: true
+
+      - name: Add Playwright report link to job summary
+        if: failure()
+        run: |
+          echo "### Playwright Report" >> "$GITHUB_STEP_SUMMARY"
+          echo "[View trace report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/reports/${{ github.run_id }}/)" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Stop backend services
         if: always()
