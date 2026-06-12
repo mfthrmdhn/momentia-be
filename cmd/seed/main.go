@@ -57,6 +57,14 @@ func main() {
 			Msisdn: 		"+6281284091234",
 			PasswordHash: 	hashPassword("testpassword"),
 		},
+		{
+			ID: 			5,
+			Username: 		"mocksolicious",
+			Email: 			"mocks@gustr.com",
+			Msisdn: 		"+6281284091235",
+			PasswordHash: 	hashPassword("testpassword"),
+		},
+
 	}
 	db.Clauses(clause.OnConflict{DoNothing: true}).Create(&users)
 
